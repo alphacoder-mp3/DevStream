@@ -11,6 +11,7 @@ const generateAccessAndRefreshTokens = async userId => {
     const user = await User.findById(userId);
     const accessToken = user.generateAccessToken();
     const refreshToken = user.generateRefreshToken();
+
     user.refreshToken = refreshToken;
     await user.save({ validateBeforeSave: false });
 
@@ -98,12 +99,12 @@ const loginUser = asyncHandler(async (req, res) => {
     throw new ApiError(400, 'username or email is required');
   }
 
-  const user = User.findOne({
+  const user = await User.findOne({
     $or: [{ username }, { email }],
   });
 
   if (!user) {
-    throw new ApiError(404, 'user does not exist');
+    throw new ApiError(404, 'User does not exist');
   }
 
   const isPasswordValid = await user.isPasswordCorrect(password); // we are making use of user not User here, since we are added isPasswordCorrect on our user obj.
@@ -127,12 +128,15 @@ const loginUser = asyncHandler(async (req, res) => {
     .cookie('accessToken', accessToken, options)
     .cookie('refreshToken', refreshToken, options)
     .json(
-      new ApiResponse(200, {
-        user: loggedInUser,
-        accessToken,
-        refreshToken,
-      }),
-      'User logged in successfully'
+      new ApiResponse(
+        200,
+        {
+          user: loggedInUser,
+          accessToken,
+          refreshToken,
+        },
+        'User logged in successfully'
+      )
     );
 });
 
