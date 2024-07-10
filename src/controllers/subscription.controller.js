@@ -1,4 +1,4 @@
-import mongoose, { isValidObjectId } from 'mongoose';
+import { isValidObjectId } from 'mongoose';
 import { User } from '../models/user.model.js';
 import { Subscription } from '../models/subscription.model.js';
 import { ApiError } from '../utils/ApiError.js';
@@ -8,7 +8,7 @@ import { asyncHandler } from '../utils/asyncHandler.js';
 // Toggle subscription method
 const toggleSubscription = asyncHandler(async (req, res) => {
   const { channelId } = req.params;
-  const { userId } = req.body; // Assuming userId is sent in the request body
+  const { userId } = req.body || { userId: req.user?._id }; // Assuming userId is sent in the request body
 
   if (!isValidObjectId(channelId) || !isValidObjectId(userId)) {
     throw new ApiError(400, 'Invalid channelId or userId');
@@ -28,7 +28,7 @@ const toggleSubscription = asyncHandler(async (req, res) => {
 
   if (existingSubscription) {
     // Unsubscribe
-    await existingSubscription.remove();
+    await Subscription.deleteOne({ _id: existingSubscription._id });
     res.status(200).json(new ApiResponse(200, {}, 'Unsubscribed successfully'));
   } else {
     // Subscribe
@@ -43,15 +43,15 @@ const toggleSubscription = asyncHandler(async (req, res) => {
 
 // Get subscriber list of a channel
 const getUserChannelSubscribers = asyncHandler(async (req, res) => {
-  const { channelId } = req.params;
+  const { subscriberId } = req.params;
 
-  if (!isValidObjectId(channelId)) {
+  if (!isValidObjectId(subscriberId)) {
     throw new ApiError(400, 'Invalid channelId');
   }
 
-  const subscribers = await Subscription.find({ channel: channelId }).populate(
-    'subscriber'
-  );
+  const subscribers = await Subscription.find({
+    channel: subscriberId,
+  }).populate('subscriber');
 
   if (!subscribers) {
     throw new ApiError(404, 'No subscribers found');
@@ -66,14 +66,14 @@ const getUserChannelSubscribers = asyncHandler(async (req, res) => {
 
 // Get channels to which user has subscribed
 const getSubscribedChannels = asyncHandler(async (req, res) => {
-  const { subscriberId } = req.params;
+  const { channelId } = req.params;
 
-  if (!isValidObjectId(subscriberId)) {
+  if (!isValidObjectId(channelId)) {
     throw new ApiError(400, 'Invalid subscriberId');
   }
 
   const channels = await Subscription.find({
-    subscriber: subscriberId,
+    subscriber: channelId,
   }).populate('channel');
 
   if (!channels) {
