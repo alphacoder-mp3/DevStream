@@ -20,8 +20,8 @@ app.use(express.static('public'));
 app.use(cookieParser());
 
 // Routes import
-import userRouter from './routes/user.routes.js';
-import subscriptionRouter from './routes/subscription.routes.js';
+import userRouter from './routes/user.routes';
+import subscriptionRouter from './routes/subscription.routes';
 
 app.use('/api/v1/users', userRouter);
 app.use('/api/v1/subscription', subscriptionRouter);
