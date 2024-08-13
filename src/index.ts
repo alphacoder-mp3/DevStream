@@ -2,21 +2,25 @@ import { config } from 'dotenv';
 import connectDB from './db/index.js';
 import { app } from './app.js';
 
+// Load environment variables from .env file
 config({ path: './env' });
 
 // Function to start the server
-const startServer = async () => {
+const startServer = async (): Promise<void> => {
   try {
     // Connect to the database
     await connectDB();
 
-    app.on('error', error => {
-      console.log('ERR:', error);
-      throw error;
+    app.on('error', (error: unknown) => {
+      if (error instanceof Error) {
+        console.log('ERR:', error);
+      } else {
+        console.log('ERR:', error);
+      }
     });
 
     // Set the port from environment variables or default to 8000
-    const port = process.env.PORT || 8000;
+    const port: number = Number(process.env.PORT) || 8000;
 
     // Start the server
     app.listen(port, () => {

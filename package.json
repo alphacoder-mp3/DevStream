@@ -24,6 +24,9 @@
     "multer": "^1.4.5-lts.1"
   },
   "devDependencies": {
+    "@types/cookie-parser": "^1.4.7",
+    "@types/cors": "^2.8.17",
+    "@types/express": "^4.17.21",
     "nodemon": "^3.1.4",
     "prettier": "^3.3.2",
     "typescript": "^5.5.4"
