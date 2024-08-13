@@ -1,14 +1,21 @@
 import { isValidObjectId } from 'mongoose';
-import { User } from '../models/user.model.js';
-import { Subscription } from '../models/subscription.model.js';
-import { ApiError } from '../utils/ApiError.js';
-import { ApiResponse } from '../utils/ApiResponse.js';
-import { asyncHandler } from '../utils/asyncHandler.js';
+import { Request, Response } from 'express';
+import { User } from '../models/user.model';
+import { Subscription } from '../models/subscription.model';
+import { ApiError } from '../utils/ApiError';
+import { ApiResponse } from '../utils/ApiResponse';
+import { asyncHandler } from '../utils/asyncHandler';
+
+interface CustomRequest extends Request {
+  user?: {
+    _id: string;
+  };
+}
 
 // Toggle subscription method
-const toggleSubscription = asyncHandler(async (req, res) => {
+const toggleSubscription = asyncHandler(async (req: Request, res: Response) => {
   const { channelId } = req.params;
-  const { userId } = req.body || { userId: req.user?._id }; // Assuming userId is sent in the request body
+  const { userId } = req.body || { userId: (req as CustomRequest).user?._id }; // Assuming userId is sent in the request body
 
   if (!isValidObjectId(channelId) || !isValidObjectId(userId)) {
     throw new ApiError(400, 'Invalid channelId or userId');
@@ -42,27 +49,29 @@ const toggleSubscription = asyncHandler(async (req, res) => {
 });
 
 // Get subscriber list of a channel
-const getUserChannelSubscribers = asyncHandler(async (req, res) => {
-  const { subscriberId } = req.params;
+const getUserChannelSubscribers = asyncHandler(
+  async (req: Request, res: Response) => {
+    const { subscriberId } = req.params;
 
-  if (!isValidObjectId(subscriberId)) {
-    throw new ApiError(400, 'Invalid channelId');
+    if (!isValidObjectId(subscriberId)) {
+      throw new ApiError(400, 'Invalid channelId');
+    }
+
+    const subscribers = await Subscription.find({
+      channel: subscriberId,
+    }).populate('subscriber');
+
+    if (!subscribers) {
+      throw new ApiError(404, 'No subscribers found');
+    }
+
+    res
+      .status(200)
+      .json(
+        new ApiResponse(200, subscribers, 'Subscribers retrieved successfully')
+      );
   }
-
-  const subscribers = await Subscription.find({
-    channel: subscriberId,
-  }).populate('subscriber');
-
-  if (!subscribers) {
-    throw new ApiError(404, 'No subscribers found');
-  }
-
-  res
-    .status(200)
-    .json(
-      new ApiResponse(200, subscribers, 'Subscribers retrieved successfully')
-    );
-});
+);
 
 // Get channels to which user has subscribed
 const getSubscribedChannels = asyncHandler(async (req, res) => {
