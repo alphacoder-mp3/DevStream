@@ -1,5 +1,9 @@
-import mongoose, { Schema } from 'mongoose';
-import mongooseAggregatePaginate from 'mongoose-aggregate-paginate-v2';
+import mongoose, {
+  Schema,
+  Document,
+  Model,
+  AggregatePaginateModel,
+} from 'mongoose';
 
 interface IVideo extends Document {
   videoFile: string;
@@ -14,14 +18,16 @@ interface IVideo extends Document {
   updatedAt?: Date;
 }
 
+interface VideoModel extends Model<IVideo>, AggregatePaginateModel<IVideo> {}
+
 const videoSchema = new Schema<IVideo>(
   {
     videoFile: {
-      type: String, //cloudinary url
+      type: String,
       required: true,
     },
     thumbnail: {
-      type: String, //cloudinary url
+      type: String,
       required: true,
     },
     title: {
@@ -54,6 +60,4 @@ const videoSchema = new Schema<IVideo>(
   }
 );
 
-videoSchema.plugin(mongooseAggregatePaginate);
-
-export const Video = mongoose.model<IVideo>('Video', videoSchema);
+export const Video = mongoose.model<IVideo, VideoModel>('Video', videoSchema);
