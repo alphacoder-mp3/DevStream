@@ -1,7 +1,6 @@
 import { Request, Response } from 'express';
-import mongoose, { isValidObjectId } from 'mongoose';
+import { isValidObjectId } from 'mongoose';
 import { Video } from '../models/video.model';
-import { User } from '../models/user.model';
 import { ApiError } from '../utils/ApiError';
 import { ApiResponse } from '../utils/ApiResponse';
 import { asyncHandler } from '../utils/asyncHandler';
@@ -60,6 +59,8 @@ const publishAVideo = asyncHandler(async (req: Request, res: Response) => {
   if (!videoFile) throw new ApiError(500, 'Video upload failed');
   if (!thumbnail) throw new ApiError(500, 'Thumbnail upload failed');
 
+  if (!req.user?._id) throw new ApiError(401, 'Unauthorized');
+
   const video = await Video.create({
     videoFile: videoFile.url,
     thumbnail: thumbnail.url,
@@ -109,7 +110,9 @@ const updateVideo = asyncHandler(async (req: Request, res: Response) => {
     throw new ApiError(404, 'Video not found');
   }
 
-  if (video.owner.toString() !== req.user._id.toString()) {
+  if (!req.user?._id) throw new ApiError(401, 'Unauthorized');
+
+  if (video.owner?.toString() !== req.user._id.toString()) {
     throw new ApiError(403, 'You are not authorized to update this video');
   }
 
@@ -142,7 +145,9 @@ const deleteVideo = asyncHandler(async (req: Request, res: Response) => {
     throw new ApiError(404, 'Video not found');
   }
 
-  if (video.owner.toString() !== req.user._id.toString()) {
+  if (!req.user?._id) throw new ApiError(401, 'Unauthorized');
+
+  if (video.owner?.toString() !== req.user._id.toString()) {
     throw new ApiError(403, 'You are not authorized to delete this video');
   }
 
@@ -167,7 +172,9 @@ const togglePublishStatus = asyncHandler(
       throw new ApiError(404, 'Video not found');
     }
 
-    if (video.owner.toString() !== req.user._id.toString()) {
+    if (!req.user?._id) throw new ApiError(401, 'Unauthorized');
+
+    if (video.owner?.toString() !== req.user._id.toString()) {
       throw new ApiError(
         403,
         'You are not authorized to toggle the publish status of this video'
