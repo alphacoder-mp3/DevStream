@@ -6,6 +6,7 @@ import mongoose, {
 } from 'mongoose';
 
 interface IVideo extends Document {
+  _id: mongoose.Types.ObjectId;
   videoFile: string;
   thumbnail: string;
   title: string;
