@@ -77,13 +77,18 @@
    Create a `.env` file in the root directory and configure the following:
 
    ```bash
-   NODE_ENV=development
-   MONGO_URI=your_mongodb_uri
-   JWT_SECRET=your_secret_key
-   S3_BUCKET_NAME=your_aws_s3_bucket_name
-   S3_ACCESS_KEY=your_aws_access_key
-   S3_SECRET_KEY=your_aws_secret_key
-   NEXT_PUBLIC_API_BASE_URL=http://localhost:5000/api
+   PORT=
+   DB_URL=
+   CORS_ORIGIN=
+   ##mention url cors origin url here once deployed, so that u wont be allowing other sites from accessing ur website
+   ACCESS_TOKEN_SECRET=
+   #you can keep secret like anything but for production we make use of standard formats unlike this
+   ACCESS_TOKEN_EXPIRY=
+   REFRESH_TOKEN_SECRET=
+   REFRESH_TOKEN_EXPIRY=
+   CLOUDINARY_CLOUD_NAME=
+   CLOUDINARY_API_KEY=
+   CLOUDINARY_API_SECRET=
    ```
 
 4. **Run the app:**
@@ -186,3 +191,7 @@ We welcome contributions! Here's how you can get started:
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+```
+
+```
