@@ -6,6 +6,7 @@ import { User, IUser } from '../models/user.model';
 import { uploadOnCloudinary } from '../utils/cloudinaryService';
 import jwt from 'jsonwebtoken';
 import mongoose from 'mongoose';
+import '../../types/express';
 
 const options: { httpOnly: boolean; secure: boolean } = {
   httpOnly: true,
@@ -16,9 +17,9 @@ interface Tokens {
   accessToken: string;
   refreshToken: string;
 }
-interface AuthRequest extends Request {
-  user?: IUser;
-}
+// interface Request extends Request {
+//   user?: IUser;
+// }
 
 const generateAccessAndRefreshTokens = async (
   userId: string
@@ -164,7 +165,7 @@ const loginUser = asyncHandler(async (req: Request, res: Response) => {
     );
 });
 
-const logoutUser = asyncHandler(async (req: AuthRequest, res: Response) => {
+const logoutUser = asyncHandler(async (req: Request, res: Response) => {
   await User.findByIdAndUpdate(
     req.user?._id,
     {
@@ -237,7 +238,7 @@ const refreshAccessToken = asyncHandler(async (req: Request, res: Response) => {
 });
 
 const changeCurrentPassword = asyncHandler(
-  async (req: AuthRequest, res: Response) => {
+  async (req: Request, res: Response) => {
     const { oldPassword, newPassword } = req.body;
 
     const user = await User.findById(req.user?._id);
@@ -261,12 +262,12 @@ const changeCurrentPassword = asyncHandler(
   }
 );
 
-const getCurrentUser = asyncHandler(async (req: AuthRequest, res: Response) => {
+const getCurrentUser = asyncHandler(async (req: Request, res: Response) => {
   return res.status(200).json(new ApiResponse(200, req.user, 'User details'));
 });
 
 const updateAccountDetails = asyncHandler(
-  async (req: AuthRequest, res: Response) => {
+  async (req: Request, res: Response) => {
     const { fullName, email } = req.body;
     if (!fullName || !email) {
       throw new ApiError(400, 'All fields are required');
@@ -289,33 +290,31 @@ const updateAccountDetails = asyncHandler(
   }
 );
 
-const updateUserAvatar = asyncHandler(
-  async (req: AuthRequest, res: Response) => {
-    const avatarLocalPath = req.file?.path;
+const updateUserAvatar = asyncHandler(async (req: Request, res: Response) => {
+  const avatarLocalPath = req.file?.path;
 
-    if (!avatarLocalPath) {
-      throw new ApiError(400, 'Avatar image file is missing');
-    }
-    const avatar = await uploadOnCloudinary(avatarLocalPath);
-
-    if (!avatar?.url) {
-      throw new ApiError(400, 'Error while uploading on avatar');
-    }
-
-    const user = await User.findByIdAndUpdate(
-      req.user?._id,
-      { $set: { avatar: avatar.url } },
-      { new: true }
-    ).select('-password');
-
-    return res
-      .status(200)
-      .json(new ApiResponse(200, user, 'Avatar image updated successfully'));
+  if (!avatarLocalPath) {
+    throw new ApiError(400, 'Avatar image file is missing');
   }
-);
+  const avatar = await uploadOnCloudinary(avatarLocalPath);
+
+  if (!avatar?.url) {
+    throw new ApiError(400, 'Error while uploading on avatar');
+  }
+
+  const user = await User.findByIdAndUpdate(
+    req.user?._id,
+    { $set: { avatar: avatar.url } },
+    { new: true }
+  ).select('-password');
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, user, 'Avatar image updated successfully'));
+});
 
 const updateUserCoverImage = asyncHandler(
-  async (req: AuthRequest, res: Response) => {
+  async (req: Request, res: Response) => {
     const coverLocalPath = req.file?.path;
 
     if (!coverLocalPath) {
@@ -340,7 +339,7 @@ const updateUserCoverImage = asyncHandler(
 );
 
 const getUserChannelProfile = asyncHandler(
-  async (req: AuthRequest, res: Response) => {
+  async (req: Request, res: Response) => {
     const { username } = req.params;
 
     if (!username?.trim()) {
@@ -412,61 +411,59 @@ const getUserChannelProfile = asyncHandler(
   }
 );
 
-const getWatchHistory = asyncHandler(
-  async (req: AuthRequest, res: Response) => {
-    const user = await User.aggregate([
-      {
-        $match: {
-          _id: new mongoose.Types.ObjectId(req.user?._id),
-        },
+const getWatchHistory = asyncHandler(async (req: Request, res: Response) => {
+  const user = await User.aggregate([
+    {
+      $match: {
+        _id: new mongoose.Types.ObjectId(req.user?._id),
       },
-      {
-        $lookup: {
-          from: 'videos',
-          localField: 'watchHistory',
-          foreignField: '_id',
-          as: 'watchHistory',
-          pipeline: [
-            {
-              $lookup: {
-                from: 'users',
-                localField: 'owner',
-                foreignField: '_id',
-                as: 'owner',
-                pipeline: [
-                  {
-                    $project: {
-                      fullName: 1,
-                      username: 1,
-                      avatar: 1,
-                    },
+    },
+    {
+      $lookup: {
+        from: 'videos',
+        localField: 'watchHistory',
+        foreignField: '_id',
+        as: 'watchHistory',
+        pipeline: [
+          {
+            $lookup: {
+              from: 'users',
+              localField: 'owner',
+              foreignField: '_id',
+              as: 'owner',
+              pipeline: [
+                {
+                  $project: {
+                    fullName: 1,
+                    username: 1,
+                    avatar: 1,
                   },
-                ],
-              },
-            },
-            {
-              $addFields: {
-                owner: {
-                  $first: '$owner',
                 },
+              ],
+            },
+          },
+          {
+            $addFields: {
+              owner: {
+                $first: '$owner',
               },
             },
-          ],
-        },
+          },
+        ],
       },
-    ]);
+    },
+  ]);
 
-    return res
-      .status(200)
-      .json(
-        new ApiResponse(
-          200,
-          user[0].watchHistory,
-          'Watch history fetched successfully'
-        )
-      );
-  }
-);
+  return res
+    .status(200)
+    .json(
+      new ApiResponse(
+        200,
+        user[0].watchHistory,
+        'Watch history fetched successfully'
+      )
+    );
+});
 
 export {
   registerUser,

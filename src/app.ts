@@ -22,8 +22,10 @@ app.use(cookieParser());
 // Routes import
 import userRouter from './routes/user.routes';
 import subscriptionRouter from './routes/subscription.routes';
+import playlistRouter from './routes/playlist.routes';
 
 app.use('/api/v1/users', userRouter);
 app.use('/api/v1/subscription', subscriptionRouter);
+app.use('/api/v1/playlist', playlistRouter);
 
 export { app };
